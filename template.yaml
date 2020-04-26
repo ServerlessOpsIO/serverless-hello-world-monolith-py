@@ -66,11 +66,11 @@ Globals:
 
 
 Resources:
-  CreateItem:
+  MessageCrudApp:
     Type: AWS::Serverless::Function
     Properties:
-      Description: "Put item in DDB"
-      CodeUri: src/handlers/CreateItem
+      Description: "Message CRUD Application"
+      CodeUri: src/handlers/MessageCrud
       Handler: function.handler
       Runtime: python3.8
       MemorySize: 128
@@ -85,41 +85,9 @@ Resources:
           - Effect: "Allow"
             Action:
               - "dynamodb:PutItem"
-            Resource:
-              Fn::GetAtt:
-                - DynamoDBTable
-                - Arn
-      Environment:
-        Variables:
-          DDB_TABLE_NAME: !Ref DynamoDBTable
-      Events:
-        SnsTopic:
-          Type: SNS
-          Properties:
-            Topic: !Ref DDBItemTopic
-            FilterPolicy:
-              Function:
-                - CreateItem
-
-  RetrieveItem:
-    Type: AWS::Serverless::Function
-    Properties:
-      Description: "Get item in DDB"
-      CodeUri: src/handlers/RetrieveItem
-      Handler: function.handler
-      Runtime: python3.8
-      MemorySize: 128
-      Timeout: 3
-      Policies:
-        - Statement:
-          - Effect: "Allow"
-            Action:
-              - "ssm:GetParameter"
-            Resource: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ServiceName}/${ServiceEnv}/*"
-        - Statement:
-          - Effect: "Allow"
-            Action:
               - "dynamodb:GetItem"
+              - "dynamodb:UpdateItem"
+              - "dynamodb:DeleteItem"
             Resource:
               Fn::GetAtt:
                 - DynamoDBTable
@@ -131,79 +99,10 @@ Resources:
         ApiGateway:
           Type: Api
           Properties:
-            Path: /message/{messageId}
-            Method: GET
+            Path: '{proxy+}'
+            Method: ANY
             RestApiId: !Ref ApiGatewayApi
 
-  UpdateItem:
-    Type: AWS::Serverless::Function
-    Properties:
-      Description: "Update item in DDB"
-      CodeUri: src/handlers/UpdateItem
-      Handler: function.handler
-      Runtime: python3.8
-      MemorySize: 128
-      Timeout: 3
-      Policies:
-        - Statement:
-          - Effect: "Allow"
-            Action:
-              - "ssm:GetParameter"
-            Resource: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ServiceName}/${ServiceEnv}/*"
-        - Statement:
-          - Effect: "Allow"
-            Action:
-              - "dynamodb:UpdateItem"
-            Resource:
-              Fn::GetAtt:
-                - DynamoDBTable
-                - Arn
-      Environment:
-        Variables:
-          DDB_TABLE_NAME: !Ref DynamoDBTable
-      Events:
-        SnsTopic:
-          Type: SNS
-          Properties:
-            Topic: !Ref DDBItemTopic
-            FilterPolicy:
-              Function:
-                - UpdateItem
-
-  DeleteItem:
-    Type: AWS::Serverless::Function
-    Properties:
-      Description: "Delete item in DDB"
-      CodeUri: src/handlers/DeleteItem
-      Handler: function.handler
-      Runtime: python3.8
-      MemorySize: 128
-      Timeout: 3
-      Policies:
-        - Statement:
-          - Effect: "Allow"
-            Action:
-              - "ssm:GetParameter"
-            Resource: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ServiceName}/${ServiceEnv}/*"
-        - Statement:
-          - Effect: "Allow"
-            Action:
-              - "dynamodb:DeleteItem"
-            Resource:
-              Fn::GetAtt:
-                - DynamoDBTable
-                - Arn
-      Environment:
-        Variables:
-          DDB_TABLE_NAME: !Ref DynamoDBTable
-      Events:
-        SnsTopic:
-          Type: SNS
-          Properties:
-            Topic: !Ref DDBItemTopic
-            FilterPolicy:
-              Function:
-                - DeleteItem
 
   ApiGatewayApi:
     Type: AWS::Serverless::Api
