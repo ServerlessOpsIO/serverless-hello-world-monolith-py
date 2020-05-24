@@ -13,10 +13,9 @@ ddb_table = ddb_res.Table(DDB_TABLE_NAME)
 def create_message(item: dict) -> dict:
     '''Transform item to put into DDB'''
     dt = datetime.utcnow()
-    dt_ttl = dt.replace(year=dt.year + 1)
     item['pk'] = str(uuid4())
+    item['sk'] = 'v0'
     item['timestamp'] = int(dt.timestamp())
-    item['ttl'] = int(dt_ttl.timestamp())
 
     r = ddb_table.put_item(
         Item=item
@@ -29,6 +28,7 @@ def retrieve_message(message_id: str) -> dict:
     r = ddb_table.get_item(
         Key={
             'pk': message_id,
+            'sk': 'v0'
         }
     )
     item = r.get('Item', {})
@@ -44,7 +44,8 @@ def update_message(message_id: str, item: dict) -> dict:
 
     r = ddb_table.update_item(
         Key={
-            'pk': message_id
+            'pk': message_id,
+            'sk': 'v0'
         },
         AttributeUpdates=attribute_updates
     )
@@ -55,7 +56,8 @@ def delete_message(message_id: str) -> dict:
     '''Delete item in DDB'''
     r = ddb_table.delete_item(
         Key={
-            'pk': message_id
+            'pk': message_id,
+            'sk': 'v0'
         },
     )
     return r
